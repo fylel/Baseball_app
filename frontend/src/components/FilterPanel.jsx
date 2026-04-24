@@ -191,7 +191,7 @@ export default function FilterPanel({ filters, onChange, onReset }) {
         showSearch
         placeholder="Search by name..."
         value={filters.pitcherIds}
-        onChange={(val) => onChange(f => ({ ...f, pitcherIds: val, ...(val.length > 0 ? { pitcherHands: [] } : {}) }))}
+        onChange={(val) => onChange(f => ({ ...f, pitcherIds: val, ...(val.length > 0 ? { pitcherHands: [], pitcherRoles: [], pitcherLabels: [] } : {}) }))}
         options={pitcherOptions}
         style={{ width: '100%', marginBottom: 8 }}
         maxTagCount={2}
@@ -199,17 +199,19 @@ export default function FilterPanel({ filters, onChange, onReset }) {
           option.label.toLowerCase().includes(input.toLowerCase())
         }
       />
-      <div style={{ marginBottom: 4 }}>
-        <Text style={{ fontSize: 10, color: '#484f58', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-          or filter by label
-        </Text>
+      <div style={{ opacity: filters.pitcherIds.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds.length > 0 ? 'none' : 'auto' }}>
+        <div style={{ marginBottom: 4 }}>
+          <Text style={{ fontSize: 10, color: '#484f58', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            or filter by label
+          </Text>
+        </div>
+        <TogglePills
+          options={PITCHER_LABEL_OPTIONS}
+          value={filters.pitcherLabels}
+          onChange={set('pitcherLabels')}
+          color='#bc8cff'
+        />
       </div>
-      <TogglePills
-        options={PITCHER_LABEL_OPTIONS}
-        value={filters.pitcherLabels}
-        onChange={set('pitcherLabels')}
-        color='#bc8cff'
-      />
 
       <Divider style={{ borderColor: '#21262d', margin: '12px 0' }} />
 
@@ -221,7 +223,7 @@ export default function FilterPanel({ filters, onChange, onReset }) {
           onChange={set('pitcherHands')}
         />
       </div>
-      <div style={{ marginTop: 10 }}>
+      <div style={{ marginTop: 10, opacity: filters.pitcherIds.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds.length > 0 ? 'none' : 'auto' }}>
         <SectionLabel>Pitcher Role</SectionLabel>
         <TogglePills
           options={[{ value: 'SP', label: 'Starter' }, { value: 'RP', label: 'Reliever' }]}

@@ -7,9 +7,9 @@ const ZONE_GRID = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 const CELL = 88
 
 const METRICS = [
-  { key: 'out', label: '出局', color: '88,166,255' },
+  { key: 'out', label: 'Out%', color: '88,166,255' },
+  { key: 'foul', label: 'Foul%', color: '227,179,65' },
   { key: 'whiff', label: 'Whiff%', color: '255,107,107' },
-  { key: 'hit', label: '好打率', color: '63,185,80' },
 ]
 
 export default function ZoneHeatmap({ zoneData, totalPitches, setName, setColor }) {
@@ -20,8 +20,8 @@ export default function ZoneHeatmap({ zoneData, totalPitches, setName, setColor 
     const d = zoneData?.[zone]
     if (!d) return 0
     if (metric === 'out') return d.outRate
+    if (metric === 'foul') return d.foulRate
     if (metric === 'whiff') return d.whiffRate
-    if (metric === 'hit') return d.hitRate
     return 0
   }
 
@@ -29,8 +29,8 @@ export default function ZoneHeatmap({ zoneData, totalPitches, setName, setColor 
     const d = zoneData?.[zone]
     if (!d || d.total === 0) return { main: '—', sub: '' }
     if (metric === 'out') return { main: `${(d.outRate * 100).toFixed(0)}%`, sub: `n=${d.total}` }
+    if (metric === 'foul') return { main: `${(d.foulRate * 100).toFixed(0)}%`, sub: `n=${d.total}` }
     if (metric === 'whiff') return { main: `${(d.whiffRate * 100).toFixed(0)}%`, sub: `n=${d.total}` }
-    if (metric === 'hit') return { main: `${(d.hitRate * 100).toFixed(0)}%`, sub: `n=${d.total}` }
     return { main: '—', sub: '' }
   }
 

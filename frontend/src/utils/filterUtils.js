@@ -83,7 +83,7 @@ export function aggregateByZone(pitches) {
         ...d,
         whiffRate: swingAttempts > 0 ? d.swinging_strike / swingAttempts : 0,
         outRate: d.total > 0 ? d.in_play_out / d.total : 0,
-        hitRate: d.total > 0 ? d.in_play_hit / d.total : 0,
+        foulRate: d.total > 0 ? d.foul / d.total : 0,
       }]
     })
   )
