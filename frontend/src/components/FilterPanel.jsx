@@ -1,4 +1,4 @@
-import { Switch, Divider, Button, Typography, Select } from 'antd'
+import { Divider, Button, Typography, Select } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { SEASONS, ALL_PITCH_TYPES, PITCH_TYPE_LABELS, PITCHERS, PITCHER_LABEL_OPTIONS } from '../data/mockData'
 
@@ -181,10 +181,6 @@ export default function FilterPanel({ filters, onChange, onReset }) {
         value={filters.seasons}
         onChange={set('seasons')}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 4 }}>
-        <Switch size="small" checked={filters.recentWeight} onChange={set('recentWeight')} />
-        <Text style={{ fontSize: 12, color: '#8b949e' }}>Recent weight</Text>
-      </div>
 
       <Divider style={{ borderColor: '#21262d', margin: '12px 0' }} />
 
@@ -195,7 +191,7 @@ export default function FilterPanel({ filters, onChange, onReset }) {
         showSearch
         placeholder="Search by name..."
         value={filters.pitcherIds}
-        onChange={set('pitcherIds')}
+        onChange={(val) => onChange(f => ({ ...f, pitcherIds: val, ...(val.length > 0 ? { pitcherHands: [] } : {}) }))}
         options={pitcherOptions}
         style={{ width: '100%', marginBottom: 8 }}
         maxTagCount={2}
@@ -218,11 +214,13 @@ export default function FilterPanel({ filters, onChange, onReset }) {
       <Divider style={{ borderColor: '#21262d', margin: '12px 0' }} />
 
       <SectionLabel>Pitcher Hand</SectionLabel>
-      <TogglePills
-        options={[{ value: 'R', label: 'RHP' }, { value: 'L', label: 'LHP' }]}
-        value={filters.pitcherHands}
-        onChange={set('pitcherHands')}
-      />
+      <div style={{ opacity: filters.pitcherIds.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds.length > 0 ? 'none' : 'auto' }}>
+        <TogglePills
+          options={[{ value: 'R', label: 'RHP' }, { value: 'L', label: 'LHP' }]}
+          value={filters.pitcherHands}
+          onChange={set('pitcherHands')}
+        />
+      </div>
       <div style={{ marginTop: 10 }}>
         <SectionLabel>Pitcher Role</SectionLabel>
         <TogglePills

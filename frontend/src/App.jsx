@@ -10,7 +10,6 @@ import { BATTERS, ALL_PITCHES } from './data/mockData'
 import {
   DEFAULT_FILTERS,
   filterPitches,
-  applyRecentWeight,
   aggregateByResult,
   aggregateByPitchType,
   aggregateByZone,
@@ -64,8 +63,7 @@ export default function App() {
 
   const setsData = useMemo(() => {
     return sets.map(set => {
-      let pitches = filterPitches(ALL_PITCHES, set.filters)
-      if (set.filters.recentWeight) pitches = applyRecentWeight(pitches)
+      const pitches = filterPitches(ALL_PITCHES, set.filters)
       return {
         ...set,
         pitches,

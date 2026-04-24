@@ -8,7 +8,6 @@ export const DEFAULT_FILTERS = {
   pitchTypes: [],
   zones: [],
   counts: [],
-  recentWeight: false,
 }
 
 export function filterPitches(pitches, filters) {
@@ -25,14 +24,6 @@ export function filterPitches(pitches, filters) {
       if (!filters.counts.includes(`${p.balls}-${p.strikes}`)) return false
     }
     return true
-  })
-}
-
-export function applyRecentWeight(pitches) {
-  return pitches.flatMap(p => {
-    if (p.season === 2024) return [p, p, p]
-    if (p.season === 2023) return [p, p]
-    return [p]
   })
 }
 
@@ -90,8 +81,8 @@ export function aggregateByZone(pitches) {
       const swingAttempts = d.swinging_strike + d.foul + d.in_play_out + d.in_play_hit
       return [+zone, {
         ...d,
-        frequency: d.total / maxTotal,
         whiffRate: swingAttempts > 0 ? d.swinging_strike / swingAttempts : 0,
+        outRate: d.total > 0 ? d.in_play_out / d.total : 0,
         hitRate: d.total > 0 ? d.in_play_hit / d.total : 0,
       }]
     })
