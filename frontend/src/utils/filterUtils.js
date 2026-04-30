@@ -1,49 +1,97 @@
 export const DEFAULT_FILTERS = {
-  batterId: 'b1',
-  seasons: [],
+  batterId: '',
+  year: '',
   pitcherIds: [],
   pitcherLabels: [],
-  pitcherHands: [],
-  pitcherRoles: [],
+  pitcherHands: '',
+  pitcherRole: 'All',
   pitchTypes: [],
   zones: [],
   counts: [],
 }
 
+const getResultType = (p) => {
+  if (p.type === 'B') return 'ball'
+  if (p.description === 'called_strike') return 'called_strike'
+  if (p.description?.includes('swinging_strike')) return 'swinging_strike'
+  if (p.description === 'foul') return 'foul'
+  if (p.type === 'X') {
+    return (p.events && p.events.includes('out')) ? 'in_play_out' : 'in_play_hit'
+  }
+  return 'other'
+}
+
 export function filterPitches(pitches, filters) {
+  if (!pitches || pitches.length === 0) return []
+
   return pitches.filter(p => {
-    if (filters.batterId && p.batterId !== filters.batterId) return false
-    if (filters.seasons?.length && !filters.seasons.includes(p.season)) return false
-    if (filters.pitcherIds?.length && !filters.pitcherIds.includes(p.pitcherId)) return false
-    if (filters.pitcherLabels?.length && !filters.pitcherLabels.includes(p.pitcherLabel)) return false
-    if (filters.pitcherHands?.length && !filters.pitcherHands.includes(p.pitcherHand)) return false
-    if (filters.pitcherRoles?.length && !filters.pitcherRoles.includes(p.pitcherRole)) return false
-    if (filters.pitchTypes?.length && !filters.pitchTypes.includes(p.pitchType)) return false
-    if (filters.zones?.length && !filters.zones.includes(p.zone)) return false
-    if (filters.counts?.length) {
-      if (!filters.counts.includes(`${p.balls}-${p.strikes}`)) return false
+    const bId = String(p.batter || p.batter_id || p.batterId || '')
+    const pId = String(p.pitcher || p.pitcher_id || p.pitcherId || '')
+
+    if (filters.batterId && filters.batterId !== '') {
+      if (bId !== String(filters.batterId)) return false
     }
+
+    const year = p.game_date ? p.game_date.split('-')[0] : null
+    if (filters.year && filters.year !== '') {
+      if (year !== filters.year) return false
+    }
+
+    if (filters.pitcherIds?.length > 0) {
+      if (!filters.pitcherIds.includes(pId)) return false
+    }
+
+    if (filters.pitcherHands && filters.pitcherHands !== '') {
+      if (p.p_throws !== filters.pitcherHands) return false
+    }
+
+    if (filters.pitcherRole && filters.pitcherRole !== 'All') {
+      if (p.role !== filters.pitcherRole) return false
+    }
+
+    if (filters.pitchTypes?.length && !filters.pitchTypes.includes(p.pitch_type)) return false
+    if (filters.zones?.length && !filters.zones.includes(p.zone)) return false
+
+    if (filters.counts?.length) {
+      const currentCount = `${p.balls}-${p.strikes}`
+      if (!filters.counts.includes(currentCount)) return false
+    }
+
     return true
   })
 }
 
 export function aggregateByResult(pitches) {
+  if (!pitches || pitches.length === 0) return []
   const ORDER = ['ball', 'called_strike', 'swinging_strike', 'foul', 'in_play_out', 'in_play_hit']
   const counts = {}
-  pitches.forEach(p => { counts[p.result] = (counts[p.result] || 0) + 1 })
+
+  pitches.forEach(p => {
+    const res = getResultType(p)
+    counts[res] = (counts[res] || 0) + 1
+  })
+
   return ORDER
     .filter(r => counts[r] > 0)
-    .map(r => ({ result: r, count: counts[r], pct: +((counts[r] / pitches.length) * 100).toFixed(1) }))
+    .map(r => ({
+      result: r,
+      count: counts[r],
+      pct: +((counts[r] / pitches.length) * 100).toFixed(1)
+    }))
 }
 
 export function aggregateByPitchType(pitches) {
+  if (!pitches || pitches.length === 0) return []
   const byType = {}
+
   pitches.forEach(p => {
-    if (!byType[p.pitchType]) {
-      byType[p.pitchType] = { total: 0, ball: 0, called_strike: 0, swinging_strike: 0, foul: 0, in_play_out: 0, in_play_hit: 0 }
+    const type = p.pitch_type || 'Unknown'
+    if (!byType[type]) {
+      byType[type] = { total: 0, ball: 0, called_strike: 0, swinging_strike: 0, foul: 0, in_play_out: 0, in_play_hit: 0 }
     }
-    byType[p.pitchType].total++
-    byType[p.pitchType][p.result] = (byType[p.pitchType][p.result] || 0) + 1
+    byType[type].total++
+    const rType = getResultType(p)
+    if (byType[type][rType] !== undefined) byType[type][rType]++
   })
 
   return Object.entries(byType)
@@ -68,14 +116,18 @@ export function aggregateByZone(pitches) {
   for (let z = 1; z <= 9; z++) {
     byZone[z] = { total: 0, ball: 0, called_strike: 0, swinging_strike: 0, foul: 0, in_play_out: 0, in_play_hit: 0 }
   }
+
+  if (!pitches || pitches.length === 0) return byZone
+
   pitches.forEach(p => {
-    if (p.zone >= 1 && p.zone <= 9) {
-      byZone[p.zone].total++
-      byZone[p.zone][p.result] = (byZone[p.zone][p.result] || 0) + 1
+    const res = getResultType(p)
+    const z = parseInt(p.zone)
+    if (z >= 1 && z <= 9) {
+      byZone[z].total++
+      if (byZone[z][res] !== undefined) byZone[z][res]++
     }
   })
 
-  const maxTotal = Math.max(...Object.values(byZone).map(z => z.total), 1)
   return Object.fromEntries(
     Object.entries(byZone).map(([zone, d]) => {
       const swingAttempts = d.swinging_strike + d.foul + d.in_play_out + d.in_play_hit
@@ -90,21 +142,25 @@ export function aggregateByZone(pitches) {
 }
 
 export function getSummaryStats(pitches) {
-  if (!pitches.length) return null
-  const n = pitches.length
-  const called_strike = pitches.filter(p => p.result === 'called_strike').length
-  const swinging_strike = pitches.filter(p => p.result === 'swinging_strike').length
-  const ball = pitches.filter(p => p.result === 'ball').length
-  const swingAttempts = pitches.filter(p => ['swinging_strike', 'foul', 'in_play_out', 'in_play_hit'].includes(p.result)).length
-  const inPlay = pitches.filter(p => ['in_play_out', 'in_play_hit'].includes(p.result)).length
-  const hits = pitches.filter(p => p.result === 'in_play_hit').length
+  if (!pitches || pitches.length === 0) return null
+  const stats = { n: pitches.length, cs: 0, ss: 0, ball: 0, swings: 0, inPlay: 0, hits: 0 }
+
+  pitches.forEach(p => {
+    const res = getResultType(p)
+    if (res === 'called_strike') stats.cs++
+    if (res === 'swinging_strike') stats.ss++
+    if (res === 'ball') stats.ball++
+    if (['swinging_strike', 'foul', 'in_play_out', 'in_play_hit'].includes(res)) stats.swings++
+    if (['in_play_out', 'in_play_hit'].includes(res)) stats.inPlay++
+    if (res === 'in_play_hit') stats.hits++
+  })
 
   return {
-    total: n,
-    strikeRate: +(((n - ball) / n) * 100).toFixed(1),
-    swingRate: +((swingAttempts / n) * 100).toFixed(1),
-    whiffRate: swingAttempts > 0 ? +((swinging_strike / swingAttempts) * 100).toFixed(1) : 0,
-    cswRate: +(((called_strike + swinging_strike) / n) * 100).toFixed(1),
-    babip: inPlay > 0 ? +((hits / inPlay) * 100).toFixed(1) : 0,
+    total: stats.n,
+    strikeRate: +(((stats.n - stats.ball) / stats.n) * 100).toFixed(1),
+    swingRate: +((stats.swings / stats.n) * 100).toFixed(1),
+    whiffRate: stats.swings > 0 ? +((stats.ss / stats.swings) * 100).toFixed(1) : 0,
+    cswRate: +(((stats.cs + stats.ss) / stats.n) * 100).toFixed(1),
+    babip: stats.inPlay > 0 ? +((stats.hits / stats.inPlay) * 100).toFixed(1) : 0,
   }
 }

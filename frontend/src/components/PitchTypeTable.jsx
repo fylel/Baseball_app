@@ -1,11 +1,25 @@
 import { Table, Typography } from 'antd'
-import { PITCH_TYPE_LABELS } from '../data/mockData'
 
 const { Text } = Typography
 
+
+const PITCH_TYPE_LABELS = {
+  FF: 'Four-Seam FB',
+  SI: 'Sinker',
+  SL: 'Slider',
+  CH: 'Changeup',
+  CU: 'Curveball',
+  FC: 'Cutter',
+  ST: 'Sweeper', 
+  FS: 'Splitter',
+}
+
+// 補上 ST 和 FS 的顏色
 const PITCH_TYPE_COLORS = {
   FF: '#f0883e', SI: '#e3b341', SL: '#58a6ff',
   CH: '#3fb950', CU: '#bc8cff', FC: '#ff6b6b',
+  ST: '#d2a8ff', 
+  FS: '#2da44e', 
 }
 
 const mono = (color) => (v) => (

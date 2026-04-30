@@ -1,8 +1,37 @@
 import { Divider, Button, Typography, Select } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
-import { SEASONS, ALL_PITCH_TYPES, PITCH_TYPE_LABELS, PITCHERS, PITCHER_LABEL_OPTIONS } from '../data/mockData'
 
 const { Text } = Typography
+
+const PITCHER_LABEL_OPTIONS = [
+  { value: 'Power', label: 'Power' },
+  { value: 'Finesse', label: 'Finesse' },
+  { value: 'Sinker', label: 'Sinker' }
+]
+
+const ALL_PITCH_TYPES = ['FF', 'SI', 'SL', 'CH', 'CU', 'FC', 'ST', 'FS']
+
+const PITCH_TYPE_LABELS = {
+  FF: 'Four-Seam FB',
+  SI: 'Sinker',
+  SL: 'Slider',
+  CH: 'Changeup',
+  CU: 'Curveball',
+  FC: 'Cutter',
+  ST: 'Sweeper',
+  FS: 'Splitter',
+}
+
+const PITCH_TYPE_COLORS = {
+  FF: '#f0883e', SI: '#e3b341', SL: '#58a6ff',
+  CH: '#3fb950', CU: '#bc8cff', FC: '#ff6b6b',
+  ST: '#d2a8ff', FS: '#2da44e',
+}
+
+const YEAR_OPTIONS = [
+  '2025', '2024', '2023', '2022', '2021',
+  '2020', '2019', '2018', '2017', '2016', '2015'
+]
 
 const ZONE_GRID = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 const COUNT_ROWS = [
@@ -11,11 +40,6 @@ const COUNT_ROWS = [
   [{ b: 2, s: 0 }, { b: 2, s: 1 }, { b: 2, s: 2 }],
   [{ b: 3, s: 0 }, { b: 3, s: 1 }, { b: 3, s: 2 }],
 ]
-
-const PITCH_TYPE_COLORS = {
-  FF: '#f0883e', SI: '#e3b341', SL: '#58a6ff',
-  CH: '#3fb950', CU: '#bc8cff', FC: '#ff6b6b',
-}
 
 function SectionLabel({ children }) {
   return (
@@ -61,6 +85,22 @@ function TogglePills({ options, value, onChange, color }) {
           label={opt.label}
           selected={value.includes(opt.value)}
           onClick={() => toggle(opt.value)}
+          color={color}
+        />
+      ))}
+    </div>
+  )
+}
+
+function SingleTogglePills({ options, value, onChange, color }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+      {options.map(opt => (
+        <Pill
+          key={opt.value}
+          label={opt.label}
+          selected={value === opt.value}
+          onClick={() => onChange(opt.value)}
           color={color}
         />
       ))}
@@ -153,12 +193,14 @@ function ZoneSelector({ selectedZones, onChange }) {
   )
 }
 
-export default function FilterPanel({ filters, onChange, onReset }) {
+export default function FilterPanel({ filters, pitchers = [], onChange, onReset }) {
   const set = (key) => (val) => onChange(f => ({ ...f, [key]: val }))
 
-  const pitcherOptions = PITCHERS.map(p => ({
-    value: p.id,
-    label: `${p.name} (${p.team} · ${p.hand} · ${p.role})`,
+  const uniquePitchers = Array.from(new Map(pitchers.map(p => [String(p.id), p])).values())
+
+  const pitcherOptions = uniquePitchers.map(p => ({
+    value: String(p.id),
+    label: p.name,
   }))
 
   return (
@@ -176,10 +218,13 @@ export default function FilterPanel({ filters, onChange, onReset }) {
       </div>
 
       <SectionLabel>Season</SectionLabel>
-      <TogglePills
-        options={SEASONS.map(s => ({ value: s, label: String(s) }))}
-        value={filters.seasons}
-        onChange={set('seasons')}
+      <SingleTogglePills
+        options={[
+          { value: '', label: 'ALL' },
+          ...YEAR_OPTIONS.map(year => ({ value: year, label: year }))
+        ]}
+        value={filters.year}
+        onChange={set('year')}
       />
 
       <Divider style={{ borderColor: '#21262d', margin: '12px 0' }} />
@@ -191,15 +236,15 @@ export default function FilterPanel({ filters, onChange, onReset }) {
         showSearch
         placeholder="Search by name..."
         value={filters.pitcherIds}
-        onChange={(val) => onChange(f => ({ ...f, pitcherIds: val, ...(val.length > 0 ? { pitcherHands: [], pitcherRoles: [], pitcherLabels: [] } : {}) }))}
+        onChange={(val) => onChange(f => ({ ...f, pitcherIds: val, ...(val.length > 0 ? { pitcherHands: '', pitcherLabels: [] } : {}) }))}
         options={pitcherOptions}
         style={{ width: '100%', marginBottom: 8 }}
         maxTagCount={2}
         filterOption={(input, option) =>
-          option.label.toLowerCase().includes(input.toLowerCase())
+          (option?.label || '').toLowerCase().includes(input.toLowerCase())
         }
       />
-      <div style={{ opacity: filters.pitcherIds.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds.length > 0 ? 'none' : 'auto' }}>
+      <div style={{ opacity: filters.pitcherIds?.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds?.length > 0 ? 'none' : 'auto' }}>
         <div style={{ marginBottom: 4 }}>
           <Text style={{ fontSize: 10, color: '#484f58', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             or filter by label
@@ -216,19 +261,28 @@ export default function FilterPanel({ filters, onChange, onReset }) {
       <Divider style={{ borderColor: '#21262d', margin: '12px 0' }} />
 
       <SectionLabel>Pitcher Hand</SectionLabel>
-      <div style={{ opacity: filters.pitcherIds.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds.length > 0 ? 'none' : 'auto' }}>
-        <TogglePills
-          options={[{ value: 'R', label: 'RHP' }, { value: 'L', label: 'LHP' }]}
+      <div style={{ opacity: filters.pitcherIds?.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds?.length > 0 ? 'none' : 'auto' }}>
+        <SingleTogglePills
+          options={[
+            { value: '', label: 'ALL' },
+            { value: 'R', label: 'RHP' },
+            { value: 'L', label: 'LHP' }
+          ]}
           value={filters.pitcherHands}
           onChange={set('pitcherHands')}
         />
       </div>
-      <div style={{ marginTop: 10, opacity: filters.pitcherIds.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds.length > 0 ? 'none' : 'auto' }}>
+
+      <div style={{ marginTop: 10 }}>
         <SectionLabel>Pitcher Role</SectionLabel>
-        <TogglePills
-          options={[{ value: 'SP', label: 'Starter' }, { value: 'RP', label: 'Reliever' }]}
-          value={filters.pitcherRoles}
-          onChange={set('pitcherRoles')}
+        <SingleTogglePills
+          options={[
+            { value: 'All', label: 'ALL' },
+            { value: 'SP', label: 'Starter' },
+            { value: 'RP', label: 'Reliever' }
+          ]}
+          value={filters.pitcherRole}
+          onChange={set('pitcherRole')}
         />
       </div>
 
