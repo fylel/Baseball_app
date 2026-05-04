@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const NAV_LINKS = [
@@ -11,7 +11,6 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const [visible, setVisible] = useState(false)
   const [leaving, setLeaving] = useState(false)
-  const titleRef = useRef(null)
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 50)
@@ -128,37 +127,26 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Big background text */}
-      <div
-        ref={titleRef}
-        style={{
-          position: 'absolute',
-          bottom: -24,
-          left: 0,
-          fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: 'clamp(80px, 17vw, 220px)',
-          color: 'rgba(240, 136, 62, 0.18)',
-          letterSpacing: '-0.01em',
-          lineHeight: 1,
-          userSelect: 'none',
-          whiteSpace: 'nowrap',
-          zIndex: 1,
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0)' : 'translateY(40px)',
-          transition: 'opacity 1s ease 0.4s, transform 1s ease 0.4s',
-          animation: visible ? 'drift 20s ease-in-out infinite' : 'none',
-        }}
-      >
-        N.J.D
+      {/* Bottom-left credit */}
+      <div style={{
+        position: 'absolute',
+        bottom: 28,
+        left: 48,
+        zIndex: 2,
+        opacity: visible ? 0.45 : 0,
+        transition: 'opacity 1s ease 0.6s',
+        userSelect: 'none',
+      }}>
+        <span style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: 10,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#e6edf3',
+        }}>
+          Presented by N.J.D
+        </span>
       </div>
-
-      <style>{`
-        @keyframes drift {
-          0%   { transform: translateX(0px); }
-          50%  { transform: translateX(-18px); }
-          100% { transform: translateX(0px); }
-        }
-      `}</style>
     </div>
   )
 }
