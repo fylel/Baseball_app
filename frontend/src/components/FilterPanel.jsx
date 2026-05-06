@@ -3,12 +3,6 @@ import { ReloadOutlined } from '@ant-design/icons'
 
 const { Text } = Typography
 
-const PITCHER_LABEL_OPTIONS = [
-  { value: 'Power', label: 'Power' },
-  { value: 'Finesse', label: 'Finesse' },
-  { value: 'Sinker', label: 'Sinker' }
-]
-
 const ALL_PITCH_TYPES = ['FF', 'SI', 'SL', 'CH', 'CU', 'FC', 'ST', 'FS']
 
 const PITCH_TYPE_LABELS = {
@@ -244,20 +238,6 @@ export default function FilterPanel({ filters, pitchers = [], onChange, onReset 
           (option?.label || '').toLowerCase().includes(input.toLowerCase())
         }
       />
-      <div style={{ opacity: filters.pitcherIds?.length > 0 ? 0.3 : 1, pointerEvents: filters.pitcherIds?.length > 0 ? 'none' : 'auto' }}>
-        <div style={{ marginBottom: 4 }}>
-          <Text style={{ fontSize: 10, color: '#484f58', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            or filter by label
-          </Text>
-        </div>
-        <TogglePills
-          options={PITCHER_LABEL_OPTIONS}
-          value={filters.pitcherLabels}
-          onChange={set('pitcherLabels')}
-          color='#bc8cff'
-        />
-      </div>
-
       <Divider style={{ borderColor: '#21262d', margin: '12px 0' }} />
 
       <SectionLabel>Pitcher Hand</SectionLabel>

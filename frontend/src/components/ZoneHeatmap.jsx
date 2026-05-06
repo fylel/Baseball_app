@@ -5,6 +5,14 @@ const { Text } = Typography
 
 const ZONE_GRID = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 const CELL = 88
+const CORNER = 55
+
+const CORNER_ZONES = [
+  { zone: 11, x: 2, y: 2 },
+  { zone: 12, x: CORNER + CELL * 3 + 4, y: 2 },
+  { zone: 13, x: 2, y: CORNER + CELL * 3 + 4 },
+  { zone: 14, x: CORNER + CELL * 3 + 4, y: CORNER + CELL * 3 + 4 },
+]
 
 const METRICS = [
   { key: 'out', label: 'Out%', color: '88,166,255' },
@@ -41,7 +49,7 @@ export default function ZoneHeatmap({ zoneData, totalPitches, setName, setColor 
 
   const getCellTextColor = (zone) => getValue(zone) > 0.55 ? '#0d1117' : '#e6edf3'
 
-  const size = CELL * 3 + 4
+  const totalSize = CORNER * 2 + CELL * 3 + 4
 
   return (
     <div style={{ background: '#161b22', border: '1px solid #21262d', borderRadius: 8, padding: '16px' }}>
@@ -80,13 +88,15 @@ export default function ZoneHeatmap({ zoneData, totalPitches, setName, setColor 
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <svg width={size} height={size} style={{ borderRadius: 4, overflow: 'hidden' }}>
-          <rect width={size} height={size} fill="#0d1117" />
+        <svg width={totalSize} height={totalSize} style={{ borderRadius: 4, overflow: 'hidden' }}>
+          <rect width={totalSize} height={totalSize} fill="#0d1117" />
+
+          {/* Main 3x3 grid */}
           {ZONE_GRID.map((row, ri) =>
             row.map((zone, ci) => {
               const { main, sub } = getDisplayText(zone)
-              const x = ci * CELL + 2
-              const y = ri * CELL + 2
+              const x = CORNER + ci * CELL + 2
+              const y = CORNER + ri * CELL + 2
               const textCol = getCellTextColor(zone)
               return (
                 <g key={zone}>
@@ -110,11 +120,40 @@ export default function ZoneHeatmap({ zoneData, totalPitches, setName, setColor 
               )
             })
           )}
-          <line x1={CELL + 2} y1={2} x2={CELL + 2} y2={CELL * 3 + 2} stroke="#21262d" strokeWidth={1} />
-          <line x1={CELL * 2 + 2} y1={2} x2={CELL * 2 + 2} y2={CELL * 3 + 2} stroke="#21262d" strokeWidth={1} />
-          <line x1={2} y1={CELL + 2} x2={CELL * 3 + 2} y2={CELL + 2} stroke="#21262d" strokeWidth={1} />
-          <line x1={2} y1={CELL * 2 + 2} x2={CELL * 3 + 2} y2={CELL * 2 + 2} stroke="#21262d" strokeWidth={1} />
-          <rect x={1} y={1} width={size - 2} height={size - 2} fill="none" stroke="#30363d" strokeWidth={2} rx={3} />
+
+          {/* Corner zones 11, 12, 13, 14 */}
+          {CORNER_ZONES.map(({ zone, x, y }) => {
+            const { main, sub } = getDisplayText(zone)
+            const textCol = getCellTextColor(zone)
+            const cx = x + CORNER / 2
+            return (
+              <g key={zone}>
+                <rect x={x} y={y} width={CORNER - 2} height={CORNER - 2} fill={getCellBg(zone)} rx={2} />
+                <text x={cx} y={y + 11} textAnchor="middle"
+                  fontSize={9} fill={textCol} opacity={0.4}
+                  fontFamily="JetBrains Mono, monospace" fontWeight="700">
+                  {zone}
+                </text>
+                <text x={cx} y={y + CORNER / 2 + 2} textAnchor="middle"
+                  dominantBaseline="middle" fontSize={14} fontWeight="800"
+                  fill={textCol} fontFamily="JetBrains Mono, monospace">
+                  {main}
+                </text>
+                <text x={cx} y={y + CORNER - 9} textAnchor="middle"
+                  fontSize={8} fill={textCol} opacity={0.6}
+                  fontFamily="JetBrains Mono, monospace">
+                  {sub}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* Grid lines (main 3x3 only) */}
+          <line x1={CORNER + CELL + 2} y1={CORNER + 2} x2={CORNER + CELL + 2} y2={CORNER + CELL * 3 + 2} stroke="#21262d" strokeWidth={1} />
+          <line x1={CORNER + CELL * 2 + 2} y1={CORNER + 2} x2={CORNER + CELL * 2 + 2} y2={CORNER + CELL * 3 + 2} stroke="#21262d" strokeWidth={1} />
+          <line x1={CORNER + 2} y1={CORNER + CELL + 2} x2={CORNER + CELL * 3 + 2} y2={CORNER + CELL + 2} stroke="#21262d" strokeWidth={1} />
+          <line x1={CORNER + 2} y1={CORNER + CELL * 2 + 2} x2={CORNER + CELL * 3 + 2} y2={CORNER + CELL * 2 + 2} stroke="#21262d" strokeWidth={1} />
+          <rect x={CORNER + 1} y={CORNER + 1} width={CELL * 3 + 2} height={CELL * 3 + 2} fill="none" stroke="#30363d" strokeWidth={2} rx={3} />
         </svg>
       </div>
 
