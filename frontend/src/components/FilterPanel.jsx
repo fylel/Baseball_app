@@ -27,7 +27,20 @@ const YEAR_OPTIONS = [
   '2020', '2019', '2018', '2017', '2016', '2015'
 ]
 
-const ZONE_GRID = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+const S_CELL = 34
+const S_SIZE = S_CELL * 5
+const S_START = S_CELL
+const S_END = S_START + S_CELL * 3
+const S_MID = S_SIZE / 2
+
+const S_CORNERS = [
+  { zone: 11, path: [[0,0],[S_MID,0],[S_MID,S_START],[S_START,S_START],[S_START,S_MID],[0,S_MID]], lx: 4, ly: 13 },
+  { zone: 12, path: [[S_MID,0],[S_SIZE,0],[S_SIZE,S_MID],[S_END,S_MID],[S_END,S_START],[S_MID,S_START]], lx: S_SIZE-22, ly: 13 },
+  { zone: 13, path: [[0,S_MID],[S_START,S_MID],[S_START,S_END],[S_MID,S_END],[S_MID,S_SIZE],[0,S_SIZE]], lx: 4, ly: S_SIZE-5 },
+  { zone: 14, path: [[S_END,S_MID],[S_SIZE,S_MID],[S_SIZE,S_SIZE],[S_MID,S_SIZE],[S_MID,S_END],[S_END,S_END]], lx: S_SIZE-22, ly: S_SIZE-5 },
+]
+const S_GRID = [[1,2,3],[4,5,6],[7,8,9]]
+
 const COUNT_ROWS = [
   [{ b: 0, s: 0 }, { b: 0, s: 1 }, { b: 0, s: 2 }],
   [{ b: 1, s: 0 }, { b: 1, s: 1 }, { b: 1, s: 2 }],
@@ -157,33 +170,59 @@ function ZoneSelector({ selectedZones, onChange }) {
     if (selectedZones.includes(zone)) onChange(selectedZones.filter(z => z !== zone))
     else onChange([...selectedZones, zone])
   }
+  const pathD = (pts) => `${pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ')} Z`
+  const SEL = '#f0883e'
+  const UNSEL = '#484f58'
+
   return (
-    <div style={{ display: 'inline-block', border: '2px solid #30363d', borderRadius: 4, overflow: 'hidden' }}>
-      {ZONE_GRID.map((row, ri) => (
-        <div key={ri} style={{ display: 'flex' }}>
-          {row.map(zone => {
-            const sel = selectedZones.includes(zone)
-            return (
-              <div
-                key={zone}
-                onClick={() => toggle(zone)}
-                style={{
-                  width: 40, height: 40, border: '1px solid #21262d',
-                  background: sel ? 'rgba(240,136,62,0.2)' : '#161b22',
-                  color: sel ? '#f0883e' : '#484f58',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', fontSize: 14, fontWeight: 700,
-                  userSelect: 'none', transition: 'all 0.12s',
-                  fontFamily: 'JetBrains Mono, monospace',
-                }}
-              >
+    <svg width={S_SIZE} height={S_SIZE} viewBox={`0 0 ${S_SIZE} ${S_SIZE}`} style={{ display: 'block', borderRadius: 4 }}>
+      <rect width={S_SIZE} height={S_SIZE} fill="#0d1117" />
+
+      {S_CORNERS.map(({ zone, path, lx, ly }) => {
+        const sel = selectedZones.includes(zone)
+        return (
+          <g key={zone} onClick={() => toggle(zone)} style={{ cursor: 'pointer' }}>
+            <path d={pathD(path)} fill={sel ? 'rgba(240,136,62,0.2)' : '#161b22'} />
+            <text x={lx} y={ly} fontSize={10} fontWeight={700}
+              fill={sel ? SEL : UNSEL} fontFamily="JetBrains Mono, monospace">
+              {zone}
+            </text>
+          </g>
+        )
+      })}
+
+      <line x1={S_MID} y1={0} x2={S_MID} y2={S_START} stroke="#30363d" strokeWidth={1} />
+      <line x1={S_MID} y1={S_END} x2={S_MID} y2={S_SIZE} stroke="#30363d" strokeWidth={1} />
+      <line x1={0} y1={S_MID} x2={S_START} y2={S_MID} stroke="#30363d" strokeWidth={1} />
+      <line x1={S_END} y1={S_MID} x2={S_SIZE} y2={S_MID} stroke="#30363d" strokeWidth={1} />
+
+      {S_GRID.flatMap((row, ri) =>
+        row.map((zone, ci) => {
+          const sel = selectedZones.includes(zone)
+          const x = S_START + ci * S_CELL
+          const y = S_START + ri * S_CELL
+          return (
+            <g key={zone} onClick={() => toggle(zone)} style={{ cursor: 'pointer' }}>
+              <rect x={x} y={y} width={S_CELL} height={S_CELL}
+                fill={sel ? 'rgba(240,136,62,0.2)' : '#161b22'} />
+              <text x={x + S_CELL / 2} y={y + S_CELL / 2} textAnchor="middle"
+                dominantBaseline="middle" fontSize={13} fontWeight={700}
+                fill={sel ? SEL : UNSEL} fontFamily="JetBrains Mono, monospace">
                 {zone}
-              </div>
-            )
-          })}
-        </div>
-      ))}
-    </div>
+              </text>
+            </g>
+          )
+        })
+      )}
+
+      <rect x={S_START} y={S_START} width={S_CELL * 3} height={S_CELL * 3}
+        fill="none" stroke="#30363d" strokeWidth={1.5} />
+      <line x1={S_START+S_CELL} y1={S_START} x2={S_START+S_CELL} y2={S_END} stroke="#21262d" strokeWidth={1} />
+      <line x1={S_START+S_CELL*2} y1={S_START} x2={S_START+S_CELL*2} y2={S_END} stroke="#21262d" strokeWidth={1} />
+      <line x1={S_START} y1={S_START+S_CELL} x2={S_END} y2={S_START+S_CELL} stroke="#21262d" strokeWidth={1} />
+      <line x1={S_START} y1={S_START+S_CELL*2} x2={S_END} y2={S_START+S_CELL*2} stroke="#21262d" strokeWidth={1} />
+      <rect x={0} y={0} width={S_SIZE} height={S_SIZE} fill="none" stroke="#30363d" strokeWidth={1.5} />
+    </svg>
   )
 }
 
